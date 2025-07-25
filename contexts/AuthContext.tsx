@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '../types';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { databaseService } from '../services/database';
+import { ProgressInitializationService } from '../services/progressInitialization';
+import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -22,8 +23,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in (simplified for demo)
-    setIsLoading(false);
+    // Auto-login with demo user for testing
+    const initDemoUser = async () => {
+      try {
+        const demoUser = await databaseService.getUserByEmail('demo@gym.com');
+        if (demoUser) {
+          setUser(demoUser);
+        } else {
+          // Create demo user if doesn't exist
+          await databaseService.createUser({
+            email: 'demo@gym.com',
+            name: 'Demo User',
+            gender: 'male',
+            age: 25,
+            height: 175,
+            weight: 70,
+            targetBodyType: 'athletic',
+            fitnessLevel: 'intermediate',
+            goals: ['Build muscle', 'Lose fat', 'Improve endurance']
+          });
+          
+          const createdUser = await databaseService.getUserByEmail('demo@gym.com');
+          if (createdUser) {
+            setUser(createdUser);
+            // Initialize sample progress data
+            await ProgressInitializationService.initializeSampleProgress(createdUser.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing demo user:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initDemoUser();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {

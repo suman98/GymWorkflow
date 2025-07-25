@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  TextInput,
-  FlatList,
-} from 'react-native';
 import { useWorkout } from '@/contexts/WorkoutContext';
 import { Exercise } from '@/types';
+import React, { useState } from 'react';
+import {
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function ExploreScreen() {
   const { exercises, getExercisesByCategory } = useWorkout();

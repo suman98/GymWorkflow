@@ -1,4 +1,4 @@
-import { User, Exercise, WorkoutPlan, WorkoutExercise, BodyPart, Difficulty } from '../types';
+import { BodyPart, Difficulty, Exercise, User, WorkoutExercise, WorkoutPlan } from '../types';
 
 interface WorkoutPreferences {
   duration: number; // in minutes

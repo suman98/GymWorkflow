@@ -1,41 +1,48 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkout } from '@/contexts/WorkoutContext';
 import { WorkoutPlanGenerator } from '@/utils/workoutGenerator';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { workoutPlans, exercises, setCurrentWorkout, createWorkoutPlan } = useWorkout();
+  const { workoutPlans, exercises, setCurrentWorkout, createWorkoutPlan } =
+    useWorkout();
   const [todaysWorkout, setTodaysWorkout] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
-      router.replace('/auth/login');
-      return;
-    }
+    // Small delay to ensure navigation is ready
+    const timer = setTimeout(() => {
+      if (!user) {
+        router.replace("../auth/login");
+        return;
+      }
+    }, 100);
 
     // Set today's workout if available
-    if (workoutPlans.length > 0) {
+    if (user && workoutPlans.length > 0) {
       const today = new Date().getDay();
       const workoutIndex = today % workoutPlans.length;
       setTodaysWorkout(workoutPlans[workoutIndex]);
     }
+
+    return () => clearTimeout(timer);
   }, [user, workoutPlans, router]);
 
   const generateQuickWorkout = async () => {
     if (!user || !exercises.length) {
-      Alert.alert('Error', 'Unable to generate workout. Please try again.');
+      Alert.alert("Error", "Unable to generate workout. Please try again.");
       return;
     }
 
@@ -45,7 +52,7 @@ export default function HomeScreen() {
         frequency: 3,
         targetBodyParts: undefined,
         excludeBodyParts: undefined,
-        availableEquipment: ['bodyweight']
+        availableEquipment: ["bodyweight"],
       };
 
       const generatedPlan = WorkoutPlanGenerator.generatePersonalizedPlan(
@@ -55,17 +62,16 @@ export default function HomeScreen() {
       );
 
       await createWorkoutPlan(generatedPlan);
-      Alert.alert('Success', 'New workout plan generated!');
+      Alert.alert("Success", "New workout plan generated!");
     } catch (error) {
-      console.error('Error generating workout:', error);
-      Alert.alert('Error', 'Failed to generate workout plan.');
+      console.error("Error generating workout:", error);
+      Alert.alert("Error", "Failed to generate workout plan.");
     }
   };
 
   const startWorkout = (workout: any) => {
     setCurrentWorkout(workout);
-    // router.push('/workout/session'); // Will implement workout session later
-    Alert.alert('Coming Soon', 'Workout session feature will be implemented next!');
+    router.push("../workout/session");
   };
 
   if (!user) {
@@ -73,100 +79,130 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Good morning,</Text>
-          <Text style={styles.userName}>{user.name}!</Text>
-          <Text style={styles.subtitle}>Ready to crush your fitness goals today?</Text>
-        </View>
+    <>
+      <StatusBar />
 
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{workoutPlans.length}</Text>
-            <Text style={styles.statLabel}>Workout Plans</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>Workouts This Week</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>Minutes Exercised</Text>
-          </View>
-        </View>
-
-        {todaysWorkout ? (
-          <View style={styles.todayWorkoutCard}>
-            <Text style={styles.cardTitle}>Today&apos;s Workout</Text>
-            <Text style={styles.workoutName}>{todaysWorkout.name}</Text>
-            <Text style={styles.workoutDescription}>
-              {todaysWorkout.estimatedDuration} minutes • {todaysWorkout.exercises.length} exercises
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.greeting}>Good morning,</Text>
+            <Text style={styles.userName}>{user.name}!</Text>
+            <Text style={styles.subtitle}>
+              Ready to crush your fitness goals today?
             </Text>
-            <TouchableOpacity
-              style={styles.startButton}
-              onPress={() => startWorkout(todaysWorkout)}
-            >
-              <Text style={styles.startButtonText}>Start Workout</Text>
-            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.noWorkoutCard}>
-            <Text style={[styles.cardTitle, { color: '#333' }]}>No Workout Planned</Text>
-            <Text style={styles.noWorkoutText}>
-              Generate a personalized workout plan to get started!
-            </Text>
-            <TouchableOpacity
-              style={styles.generateButton}
-              onPress={generateQuickWorkout}
-            >
-              <Text style={styles.generateButtonText}>Generate Quick Workout</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
-        <View style={styles.quickActions}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
-            <TouchableOpacity
-              style={styles.actionCard}
-              onPress={() => router.push('/(tabs)/explore')}
-            >
-              <Text style={styles.actionIcon}>💪</Text>
-              <Text style={styles.actionText}>Browse Exercises</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionCard}
-              onPress={() => Alert.alert('Coming Soon', 'Progress tracking feature will be implemented next!')}
-            >
-              <Text style={styles.actionIcon}>📊</Text>
-              <Text style={styles.actionText}>Track Progress</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionCard}
-              onPress={() => Alert.alert('Coming Soon', 'Goals feature will be implemented next!')}
-            >
-              <Text style={styles.actionIcon}>🎯</Text>
-              <Text style={styles.actionText}>Set Goals</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionCard}
-              onPress={() => Alert.alert('Coming Soon', 'Profile settings will be implemented next!')}
-            >
-              <Text style={styles.actionIcon}>⚙️</Text>
-              <Text style={styles.actionText}>Settings</Text>
-            </TouchableOpacity>
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{workoutPlans.length}</Text>
+              <Text style={styles.statLabel}>Workout Plans</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statLabel}>Workouts This Week</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statLabel}>Minutes Exercised</Text>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          {todaysWorkout ? (
+            <View style={styles.todayWorkoutCard}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Today&apos;s Workout</Text>
+                <TouchableOpacity
+                  onPress={() => router.push("../workout/schedule")}
+                >
+                  <Text style={styles.viewScheduleText}>View Schedule</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.workoutName}>{todaysWorkout.name}</Text>
+              <Text style={styles.workoutDescription}>
+                {todaysWorkout.estimatedDuration} minutes •{" "}
+                {todaysWorkout.exercises.length} exercises
+              </Text>
+              <TouchableOpacity
+                style={styles.startButton}
+                onPress={() => startWorkout(todaysWorkout)}
+              >
+                <Text style={styles.startButtonText}>Start Workout</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.noWorkoutCard}>
+              <Text style={[styles.cardTitle, { color: "#333" }]}>
+                No Workout Planned
+              </Text>
+              <Text style={styles.noWorkoutText}>
+                Generate a personalized workout plan to get started!
+              </Text>
+              <TouchableOpacity
+                style={styles.generateButton}
+                onPress={generateQuickWorkout}
+              >
+                <Text style={styles.generateButtonText}>
+                  Generate Quick Workout
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.quickActions}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.actionsGrid}>
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => router.push("/(tabs)/explore")}
+              >
+                <Text style={styles.actionIcon}>💪</Text>
+                <Text style={styles.actionText}>Browse Exercises</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => router.push("../workout/schedule")}
+              >
+                <Text style={styles.actionIcon}>📅</Text>
+                <Text style={styles.actionText}>Workout Schedule</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => router.push("../progress/track")}
+              >
+                <Text style={styles.actionIcon}>📊</Text>
+                <Text style={styles.actionText}>Track Progress</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() => router.push("../goals/manage")}
+              >
+                <Text style={styles.actionIcon}>🎯</Text>
+                <Text style={styles.actionText}>Set Goals</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionCard}
+                onPress={() =>
+                  Alert.alert(
+                    "Coming Soon",
+                    "Profile settings will be implemented next!"
+                  )
+                }
+              >
+                <Text style={styles.actionIcon}>⚙️</Text>
+                <Text style={styles.actionText}>Settings</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   content: {
     padding: 20,
@@ -176,31 +212,31 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 18,
-    color: '#666',
+    color: "#666",
   },
   userName: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 30,
   },
   statCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
     marginHorizontal: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -208,99 +244,99 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontWeight: "bold",
+    color: "#007AFF",
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginTop: 4,
   },
   todayWorkoutCard: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderRadius: 16,
     padding: 24,
     marginBottom: 30,
   },
   noWorkoutCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 24,
     marginBottom: 30,
     borderWidth: 2,
-    borderColor: '#f0f0f0',
-    borderStyle: 'dashed',
+    borderColor: "#f0f0f0",
+    borderStyle: "dashed",
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
     marginBottom: 8,
   },
   workoutName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     marginBottom: 8,
   },
   workoutDescription: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: "rgba(255, 255, 255, 0.8)",
     marginBottom: 20,
   },
   startButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 8,
     padding: 12,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   startButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   noWorkoutText: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 20,
   },
   generateButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderRadius: 8,
     padding: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   generateButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   quickActions: {
     marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 16,
   },
   actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   actionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
-    alignItems: 'center',
-    width: '48%',
+    alignItems: "center",
+    width: "48%",
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -312,8 +348,19 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
-    textAlign: 'center',
+    fontWeight: "500",
+    color: "#333",
+    textAlign: "center",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  viewScheduleText: {
+    fontSize: 14,
+    color: "#4A90E2",
+    fontWeight: "500",
   },
 });

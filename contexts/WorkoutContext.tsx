@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Exercise, WorkoutPlan, Progress, Goal } from '../types';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { databaseService } from '../services/database';
 import { DataInitializationService } from '../services/dataInitialization';
+import { Exercise, Goal, Progress, WorkoutPlan } from '../types';
 import { useAuth } from './AuthContext';
 
 interface WorkoutContextType {

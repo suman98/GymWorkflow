@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  SafeAreaView,
-  ScrollView,
-} from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState } from 'react';
+import {
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function RegisterScreen() {
   const [formData, setFormData] = useState({

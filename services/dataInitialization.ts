@@ -1,5 +1,5 @@
-import { databaseService } from './database';
 import { sampleExercises } from '../data/exercises';
+import { databaseService } from './database';
 
 export class DataInitializationService {
   static async initializeSampleData() {

@@ -102,7 +102,7 @@ export interface Goal {
   id: string;
   userId: string;
   title: string;
-  description: string;
+  description?: string;
   targetValue: number;
   currentValue: number;
   unit: string;

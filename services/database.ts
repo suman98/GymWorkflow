@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { User, Exercise, WorkoutPlan, Progress, Goal } from '../types';
+import { Exercise, Goal, Progress, User, WorkoutPlan } from '../types';
 
 class DatabaseService {
   private db: SQLite.SQLiteDatabase;
