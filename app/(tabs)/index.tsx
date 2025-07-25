@@ -1,75 +1,319 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { useWorkout } from '@/contexts/WorkoutContext';
+import { WorkoutPlanGenerator } from '@/utils/workoutGenerator';
 
 export default function HomeScreen() {
+  const { user } = useAuth();
+  const { workoutPlans, exercises, setCurrentWorkout, createWorkoutPlan } = useWorkout();
+  const [todaysWorkout, setTodaysWorkout] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.replace('/auth/login');
+      return;
+    }
+
+    // Set today's workout if available
+    if (workoutPlans.length > 0) {
+      const today = new Date().getDay();
+      const workoutIndex = today % workoutPlans.length;
+      setTodaysWorkout(workoutPlans[workoutIndex]);
+    }
+  }, [user, workoutPlans, router]);
+
+  const generateQuickWorkout = async () => {
+    if (!user || !exercises.length) {
+      Alert.alert('Error', 'Unable to generate workout. Please try again.');
+      return;
+    }
+
+    try {
+      const preferences = {
+        duration: 30, // 30 minute workout
+        frequency: 3,
+        targetBodyParts: undefined,
+        excludeBodyParts: undefined,
+        availableEquipment: ['bodyweight']
+      };
+
+      const generatedPlan = WorkoutPlanGenerator.generatePersonalizedPlan(
+        user,
+        exercises,
+        preferences
+      );
+
+      await createWorkoutPlan(generatedPlan);
+      Alert.alert('Success', 'New workout plan generated!');
+    } catch (error) {
+      console.error('Error generating workout:', error);
+      Alert.alert('Error', 'Failed to generate workout plan.');
+    }
+  };
+
+  const startWorkout = (workout: any) => {
+    setCurrentWorkout(workout);
+    // router.push('/workout/session'); // Will implement workout session later
+    Alert.alert('Coming Soon', 'Workout session feature will be implemented next!');
+  };
+
+  if (!user) {
+    return null; // Will redirect to login
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Good morning,</Text>
+          <Text style={styles.userName}>{user.name}!</Text>
+          <Text style={styles.subtitle}>Ready to crush your fitness goals today?</Text>
+        </View>
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{workoutPlans.length}</Text>
+            <Text style={styles.statLabel}>Workout Plans</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Workouts This Week</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Minutes Exercised</Text>
+          </View>
+        </View>
+
+        {todaysWorkout ? (
+          <View style={styles.todayWorkoutCard}>
+            <Text style={styles.cardTitle}>Today&apos;s Workout</Text>
+            <Text style={styles.workoutName}>{todaysWorkout.name}</Text>
+            <Text style={styles.workoutDescription}>
+              {todaysWorkout.estimatedDuration} minutes • {todaysWorkout.exercises.length} exercises
+            </Text>
+            <TouchableOpacity
+              style={styles.startButton}
+              onPress={() => startWorkout(todaysWorkout)}
+            >
+              <Text style={styles.startButtonText}>Start Workout</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.noWorkoutCard}>
+            <Text style={[styles.cardTitle, { color: '#333' }]}>No Workout Planned</Text>
+            <Text style={styles.noWorkoutText}>
+              Generate a personalized workout plan to get started!
+            </Text>
+            <TouchableOpacity
+              style={styles.generateButton}
+              onPress={generateQuickWorkout}
+            >
+              <Text style={styles.generateButtonText}>Generate Quick Workout</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={styles.quickActions}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push('/(tabs)/explore')}
+            >
+              <Text style={styles.actionIcon}>💪</Text>
+              <Text style={styles.actionText}>Browse Exercises</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => Alert.alert('Coming Soon', 'Progress tracking feature will be implemented next!')}
+            >
+              <Text style={styles.actionIcon}>📊</Text>
+              <Text style={styles.actionText}>Track Progress</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => Alert.alert('Coming Soon', 'Goals feature will be implemented next!')}
+            >
+              <Text style={styles.actionIcon}>🎯</Text>
+              <Text style={styles.actionText}>Set Goals</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => Alert.alert('Coming Soon', 'Profile settings will be implemented next!')}
+            >
+              <Text style={styles.actionIcon}>⚙️</Text>
+              <Text style={styles.actionText}>Settings</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
-  stepContainer: {
-    gap: 8,
+  content: {
+    padding: 20,
+  },
+  header: {
+    marginBottom: 30,
+  },
+  greeting: {
+    fontSize: 18,
+    color: '#666',
+  },
+  userName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+  },
+  statCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  todayWorkoutCard: {
+    backgroundColor: '#007AFF',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 30,
+  },
+  noWorkoutCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 30,
+    borderWidth: 2,
+    borderColor: '#f0f0f0',
+    borderStyle: 'dashed',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  workoutName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  workoutDescription: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 20,
+  },
+  startButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  startButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  noWorkoutText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  generateButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  generateButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  quickActions: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    width: '48%',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  actionIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  actionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+    textAlign: 'center',
   },
 });
