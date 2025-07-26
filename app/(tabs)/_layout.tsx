@@ -37,7 +37,7 @@ export default function TabLayout() {
         name="explore"
         options={{
           title: 'Exercises',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="dumbbell.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="directions-run" color={color} />,
         }}
       />
     </Tabs>
